@@ -1,0 +1,422 @@
+<div id="photo-map-dashboard">
+  <div class="photo-map-header">
+    <div>
+      <div class="eyebrow">Photo Location Dashboard</div>
+      <h2>Submitted Photo Map</h2>
+      <p>Approved photo submissions plotted by location.</p>
+    </div>
+
+    <div class="photo-map-stats">
+      <div class="stat">
+        <span id="photoCount">0</span>
+        <label>Photos</label>
+      </div>
+      <div class="stat">
+        <span id="lastUpdated">—</span>
+        <label>Last Updated</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="photo-map-layout">
+    <div id="photoMap"></div>
+
+    <aside class="photo-list-panel">
+      <div class="panel-title">Approved Photos</div>
+      <div id="photoList" class="photo-list"></div>
+    </aside>
+  </div>
+</div>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<style>
+  #photo-map-dashboard {
+    width: 100%;
+    background: #f5f7fb;
+    border-radius: 24px;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #172033;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  }
+
+  .photo-map-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #101828, #1f2937);
+    color: #fff;
+  }
+
+  .photo-map-header h2 {
+    margin: 4px 0 4px;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.05;
+  }
+
+  .photo-map-header p {
+    margin: 0;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .eyebrow {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #f47b26;
+    font-weight: 800;
+  }
+
+  .photo-map-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    min-width: 110px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 16px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .stat span {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+
+  .stat label {
+    display: block;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .photo-map-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    min-height: 650px;
+  }
+
+  #photoMap {
+    width: 100%;
+    min-height: 650px;
+    background: #dce3ef;
+  }
+
+  .photo-list-panel {
+    background: #ffffff;
+    border-left: 1px solid #e5e7eb;
+    padding: 18px;
+    overflow-y: auto;
+    max-height: 650px;
+  }
+
+  .panel-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #667085;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .photo-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .photo-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .photo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+  }
+
+  .photo-card img {
+    width: 100%;
+    height: 145px;
+    object-fit: cover;
+    display: block;
+    background: #e5e7eb;
+  }
+
+  .photo-card-body {
+    padding: 12px;
+  }
+
+  .photo-card-title {
+    font-weight: 800;
+    font-size: 0.98rem;
+    margin-bottom: 4px;
+  }
+
+  .photo-card-meta {
+    color: #667085;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+  }
+
+  .photo-card-desc {
+    font-size: 0.86rem;
+    color: #344054;
+    line-height: 1.35;
+  }
+
+  .popup-photo {
+    width: 240px;
+  }
+
+  .popup-photo img {
+    width: 100%;
+    max-height: 170px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .popup-photo-title {
+    font-weight: 800;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .popup-photo-meta {
+    color: #667085;
+    font-size: 0.78rem;
+    margin-bottom: 6px;
+  }
+
+  .popup-photo-desc {
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
+
+  .loading-message,
+  .empty-message {
+    padding: 14px;
+    border-radius: 14px;
+    background: #f9fafb;
+    border: 1px dashed #d0d5dd;
+    color: #667085;
+    font-size: 0.92rem;
+  }
+
+  @media (max-width: 900px) {
+    .photo-map-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .photo-map-layout {
+      grid-template-columns: 1fr;
+    }
+
+    #photoMap {
+      min-height: 520px;
+    }
+
+    .photo-list-panel {
+      border-left: none;
+      border-top: 1px solid #e5e7eb;
+      max-height: none;
+    }
+  }
+</style>
+
+<script>
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij77BOpqbD-TL_4kQ14EU3ohZPJ-U1b0F1ZIt6_w4JFga58GAhse25tdaFEq6s1LGBtKdLK2/pub?gid=926950107&single=true&output=csv";
+
+  const map = L.map("photoMap", {
+    scrollWheelZoom: true
+  }).setView([34.7465, -92.2896], 10);
+
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 20,
+    attribution: "© OpenStreetMap © CARTO"
+  }).addTo(map);
+
+  const markerLayer = L.layerGroup().addTo(map);
+  const markers = [];
+
+  const photoList = document.getElementById("photoList");
+  const photoCount = document.getElementById("photoCount");
+  const lastUpdated = document.getElementById("lastUpdated");
+
+  photoList.innerHTML = `<div class="loading-message">Loading approved photo submissions...</div>`;
+
+  function clean(value) {
+    return value ? String(value).trim() : "";
+  }
+
+  function escapeHtml(value) {
+    return clean(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function getField(row, fieldName) {
+    const key = Object.keys(row).find(
+      k => k.trim().toLowerCase() === fieldName.toLowerCase()
+    );
+    return key ? row[key] : "";
+  }
+
+  function getDriveImageUrl(url) {
+    const raw = clean(url);
+
+    if (!raw) return "";
+
+    const fileMatch = raw.match(/\/file\/d\/([^/]+)/);
+    const idMatch = raw.match(/[?&]id=([^&]+)/);
+
+    const fileId = fileMatch ? fileMatch[1] : idMatch ? idMatch[1] : "";
+
+    if (fileId) {
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+    }
+
+    return raw;
+  }
+
+  function buildPopup(item) {
+    const image = getDriveImageUrl(item.photo_url);
+    const title = escapeHtml(item.title || "Submitted Photo");
+    const desc = escapeHtml(item.description);
+    const date = escapeHtml(item.date_taken);
+    const submittedBy = escapeHtml(item.submitted_by);
+
+    const metaParts = [];
+    if (date) metaParts.push(date);
+    if (submittedBy) metaParts.push(`Submitted by ${submittedBy}`);
+
+    return `
+      <div class="popup-photo">
+        ${image ? `<img src="${image}" alt="${title}">` : ""}
+        <div class="popup-photo-title">${title}</div>
+        ${metaParts.length ? `<div class="popup-photo-meta">${metaParts.join(" • ")}</div>` : ""}
+        ${desc ? `<div class="popup-photo-desc">${desc}</div>` : ""}
+      </div>
+    `;
+  }
+
+  function buildCard(item, marker) {
+    const image = getDriveImageUrl(item.photo_url);
+    const title = escapeHtml(item.title || "Submitted Photo");
+    const desc = escapeHtml(item.description);
+    const date = escapeHtml(item.date_taken);
+    const submittedBy = escapeHtml(item.submitted_by);
+
+    const card = document.createElement("div");
+    card.className = "photo-card";
+
+    card.innerHTML = `
+      ${image ? `<img src="${image}" alt="${title}">` : ""}
+      <div class="photo-card-body">
+        <div class="photo-card-title">${title}</div>
+        <div class="photo-card-meta">
+          ${date || "Date not listed"}${submittedBy ? ` • ${submittedBy}` : ""}
+        </div>
+        ${desc ? `<div class="photo-card-desc">${desc}</div>` : ""}
+      </div>
+    `;
+
+    card.addEventListener("click", () => {
+      map.setView(marker.getLatLng(), 15, { animate: true });
+      marker.openPopup();
+    });
+
+    return card;
+  }
+
+  function loadPhotos() {
+    Papa.parse(SHEET_CSV_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        markerLayer.clearLayers();
+        markers.length = 0;
+        photoList.innerHTML = "";
+
+        const approvedRows = results.data
+          .map(row => ({
+            title: getField(row, "location"),
+            photo_url: getField(row, "photo_url"),
+            lat: getField(row, "lat"),
+            lng: getField(row, "lng"),
+            description: "",
+            date_taken: getField(row, "date"),
+            submitted_by: getField(row, "name"),
+            status: getField(row, "status")
+          }))
+          .filter(row => {
+            const status = clean(row.status).toLowerCase();
+            const lat = parseFloat(row.lat);
+            const lng = parseFloat(row.lng);
+
+            return status === "approved" && !isNaN(lat) && !isNaN(lng);
+          });
+
+        photoCount.textContent = approvedRows.length;
+        lastUpdated.textContent = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        if (!approvedRows.length) {
+          photoList.innerHTML = `<div class="empty-message">No approved photo locations found yet.</div>`;
+          return;
+        }
+
+        approvedRows.forEach(item => {
+          const lat = parseFloat(item.lat);
+          const lng = parseFloat(item.lng);
+
+          const marker = L.marker([lat, lng]).addTo(markerLayer);
+          marker.bindPopup(buildPopup(item), {
+            maxWidth: 270
+          });
+
+          markers.push(marker);
+          photoList.appendChild(buildCard(item, marker));
+        });
+
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
+      },
+      error: function(error) {
+        console.error(error);
+        photoList.innerHTML = `<div class="empty-message">Could not load the photo sheet. Check the published CSV link.</div>`;
+      }
+    });
+  }
+
+  loadPhotos();
+
+  setInterval(loadPhotos, 300000);
+</script>
