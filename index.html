@@ -1,422 +1,771 @@
-<div id="photo-map-dashboard">
-  <div class="photo-map-header">
-    <div>
-      <div class="eyebrow">Photo Location Dashboard</div>
-      <h2>Submitted Photo Map</h2>
-      <p>Approved photo submissions plotted by location.</p>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submitted Photo Map</title>
 
-    <div class="photo-map-stats">
-      <div class="stat">
-        <span id="photoCount">0</span>
-        <label>Photos</label>
-      </div>
-      <div class="stat">
-        <span id="lastUpdated">—</span>
-        <label>Last Updated</label>
-      </div>
-    </div>
-  </div>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
-  <div class="photo-map-layout">
-    <div id="photoMap"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-    <aside class="photo-list-panel">
-      <div class="panel-title">Approved Photos</div>
-      <div id="photoList" class="photo-list"></div>
-    </aside>
-  </div>
-</div>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #eef2f7;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #172033;
+    }
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    #photo-map-dashboard {
+      width: min(100%, 1600px);
+      margin: 0 auto;
+      background: #f5f7fb;
+      overflow: hidden;
+      min-height: 100vh;
+    }
 
-<style>
-  #photo-map-dashboard {
-    width: 100%;
-    background: #f5f7fb;
-    border-radius: 24px;
-    overflow: hidden;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #172033;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
-  }
-
-  .photo-map-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: center;
-    padding: 24px 28px;
-    background: linear-gradient(135deg, #101828, #1f2937);
-    color: #fff;
-  }
-
-  .photo-map-header h2 {
-    margin: 4px 0 4px;
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
-    line-height: 1.05;
-  }
-
-  .photo-map-header p {
-    margin: 0;
-    color: rgba(255,255,255,0.75);
-  }
-
-  .eyebrow {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #f47b26;
-    font-weight: 800;
-  }
-
-  .photo-map-stats {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .stat {
-    min-width: 110px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 16px;
-    padding: 12px 14px;
-    text-align: center;
-  }
-
-  .stat span {
-    display: block;
-    font-size: 1.4rem;
-    font-weight: 800;
-  }
-
-  .stat label {
-    display: block;
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .photo-map-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
-    min-height: 650px;
-  }
-
-  #photoMap {
-    width: 100%;
-    min-height: 650px;
-    background: #dce3ef;
-  }
-
-  .photo-list-panel {
-    background: #ffffff;
-    border-left: 1px solid #e5e7eb;
-    padding: 18px;
-    overflow-y: auto;
-    max-height: 650px;
-  }
-
-  .panel-title {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #667085;
-    font-weight: 800;
-    margin-bottom: 12px;
-  }
-
-  .photo-list {
-    display: grid;
-    gap: 12px;
-  }
-
-  .photo-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    overflow: hidden;
-    background: #fff;
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .photo-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
-  }
-
-  .photo-card img {
-    width: 100%;
-    height: 145px;
-    object-fit: cover;
-    display: block;
-    background: #e5e7eb;
-  }
-
-  .photo-card-body {
-    padding: 12px;
-  }
-
-  .photo-card-title {
-    font-weight: 800;
-    font-size: 0.98rem;
-    margin-bottom: 4px;
-  }
-
-  .photo-card-meta {
-    color: #667085;
-    font-size: 0.82rem;
-    margin-bottom: 6px;
-  }
-
-  .photo-card-desc {
-    font-size: 0.86rem;
-    color: #344054;
-    line-height: 1.35;
-  }
-
-  .popup-photo {
-    width: 240px;
-  }
-
-  .popup-photo img {
-    width: 100%;
-    max-height: 170px;
-    object-fit: cover;
-    border-radius: 12px;
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .popup-photo-title {
-    font-weight: 800;
-    font-size: 1rem;
-    margin-bottom: 4px;
-  }
-
-  .popup-photo-meta {
-    color: #667085;
-    font-size: 0.78rem;
-    margin-bottom: 6px;
-  }
-
-  .popup-photo-desc {
-    font-size: 0.85rem;
-    line-height: 1.35;
-  }
-
-  .loading-message,
-  .empty-message {
-    padding: 14px;
-    border-radius: 14px;
-    background: #f9fafb;
-    border: 1px dashed #d0d5dd;
-    color: #667085;
-    font-size: 0.92rem;
-  }
-
-  @media (max-width: 900px) {
     .photo-map-header {
-      align-items: flex-start;
-      flex-direction: column;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      padding: 24px 28px;
+      background: linear-gradient(135deg, #101828, #1f2937);
+      color: #fff;
+    }
+
+    .photo-map-header h1 {
+      margin: 4px 0 4px;
+      font-size: clamp(1.6rem, 3vw, 2.6rem);
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+    }
+
+    .photo-map-header p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.98rem;
+    }
+
+    .eyebrow {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #f47b26;
+      font-weight: 900;
+    }
+
+    .photo-map-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .stat {
+      min-width: 120px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 12px 14px;
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 1.35rem;
+      font-weight: 900;
+    }
+
+    .stat label {
+      display: block;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.72);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     .photo-map-layout {
-      grid-template-columns: 1fr;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      height: calc(100vh - 137px);
+      min-height: 620px;
     }
 
     #photoMap {
-      min-height: 520px;
+      width: 100%;
+      height: 100%;
+      min-height: 500px;
+      background: #dce3ef;
     }
 
     .photo-list-panel {
-      border-left: none;
-      border-top: 1px solid #e5e7eb;
-      max-height: none;
-    }
-  }
-</style>
-
-<script>
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij77BOpqbD-TL_4kQ14EU3ohZPJ-U1b0F1ZIt6_w4JFga58GAhse25tdaFEq6s1LGBtKdLK2/pub?gid=926950107&single=true&output=csv";
-
-  const map = L.map("photoMap", {
-    scrollWheelZoom: true
-  }).setView([34.7465, -92.2896], 10);
-
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    maxZoom: 20,
-    attribution: "© OpenStreetMap © CARTO"
-  }).addTo(map);
-
-  const markerLayer = L.layerGroup().addTo(map);
-  const markers = [];
-
-  const photoList = document.getElementById("photoList");
-  const photoCount = document.getElementById("photoCount");
-  const lastUpdated = document.getElementById("lastUpdated");
-
-  photoList.innerHTML = `<div class="loading-message">Loading approved photo submissions...</div>`;
-
-  function clean(value) {
-    return value ? String(value).trim() : "";
-  }
-
-  function escapeHtml(value) {
-    return clean(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function getField(row, fieldName) {
-    const key = Object.keys(row).find(
-      k => k.trim().toLowerCase() === fieldName.toLowerCase()
-    );
-    return key ? row[key] : "";
-  }
-
-  function getDriveImageUrl(url) {
-    const raw = clean(url);
-
-    if (!raw) return "";
-
-    const fileMatch = raw.match(/\/file\/d\/([^/]+)/);
-    const idMatch = raw.match(/[?&]id=([^&]+)/);
-
-    const fileId = fileMatch ? fileMatch[1] : idMatch ? idMatch[1] : "";
-
-    if (fileId) {
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+      background: #ffffff;
+      border-left: 1px solid #e5e7eb;
+      padding: 18px;
+      overflow-y: auto;
+      height: 100%;
     }
 
-    return raw;
-  }
+    .panel-title {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #667085;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
 
-  function buildPopup(item) {
-    const image = getDriveImageUrl(item.photo_url);
-    const title = escapeHtml(item.title || "Submitted Photo");
-    const desc = escapeHtml(item.description);
-    const date = escapeHtml(item.date_taken);
-    const submittedBy = escapeHtml(item.submitted_by);
+    .photo-list-title {
+      margin-top: 20px;
+    }
 
-    const metaParts = [];
-    if (date) metaParts.push(date);
-    if (submittedBy) metaParts.push(`Submitted by ${submittedBy}`);
+    .farthest-photo-card {
+      border-radius: 22px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff7ed, #ffffff);
+      border: 1px solid rgba(244, 123, 38, 0.38);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      cursor: pointer;
+    }
 
-    return `
-      <div class="popup-photo">
-        ${image ? `<img src="${image}" alt="${title}">` : ""}
-        <div class="popup-photo-title">${title}</div>
-        ${metaParts.length ? `<div class="popup-photo-meta">${metaParts.join(" • ")}</div>` : ""}
-        ${desc ? `<div class="popup-photo-desc">${desc}</div>` : ""}
-      </div>
-    `;
-  }
+    .farthest-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #f47b26;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
 
-  function buildCard(item, marker) {
-    const image = getDriveImageUrl(item.photo_url);
-    const title = escapeHtml(item.title || "Submitted Photo");
-    const desc = escapeHtml(item.description);
-    const date = escapeHtml(item.date_taken);
-    const submittedBy = escapeHtml(item.submitted_by);
+    .farthest-name {
+      font-size: 1.12rem;
+      font-weight: 950;
+      color: #101828;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
 
-    const card = document.createElement("div");
-    card.className = "photo-card";
+    .farthest-meta {
+      font-size: 0.88rem;
+      color: #475467;
+      line-height: 1.45;
+    }
 
-    card.innerHTML = `
-      ${image ? `<img src="${image}" alt="${title}">` : ""}
-      <div class="photo-card-body">
-        <div class="photo-card-title">${title}</div>
-        <div class="photo-card-meta">
-          ${date || "Date not listed"}${submittedBy ? ` • ${submittedBy}` : ""}
-        </div>
-        ${desc ? `<div class="photo-card-desc">${desc}</div>` : ""}
-      </div>
-    `;
+    .farthest-miles {
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #f47b26;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 900;
+    }
 
-    card.addEventListener("click", () => {
-      map.setView(marker.getLatLng(), 15, { animate: true });
-      marker.openPopup();
-    });
+    .photo-list {
+      display: grid;
+      gap: 12px;
+    }
 
-    return card;
-  }
+    .photo-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
 
-  function loadPhotos() {
-    Papa.parse(SHEET_CSV_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        markerLayer.clearLayers();
-        markers.length = 0;
-        photoList.innerHTML = "";
+    .photo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+    }
 
-        const approvedRows = results.data
-          .map(row => ({
-            title: getField(row, "location"),
-            photo_url: getField(row, "photo_url"),
-            lat: getField(row, "lat"),
-            lng: getField(row, "lng"),
-            description: "",
-            date_taken: getField(row, "date"),
-            submitted_by: getField(row, "name"),
-            status: getField(row, "status")
-          }))
-          .filter(row => {
-            const status = clean(row.status).toLowerCase();
-            const lat = parseFloat(row.lat);
-            const lng = parseFloat(row.lng);
+    .photo-card img {
+      width: 100%;
+      height: 145px;
+      object-fit: cover;
+      display: block;
+      background: #e5e7eb;
+    }
 
-            return status === "approved" && !isNaN(lat) && !isNaN(lng);
-          });
+    .photo-card-body {
+      padding: 12px;
+    }
 
-        photoCount.textContent = approvedRows.length;
-        lastUpdated.textContent = new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit"
-        });
+    .photo-card-title {
+      font-weight: 900;
+      font-size: 1rem;
+      margin-bottom: 4px;
+      color: #101828;
+    }
 
-        if (!approvedRows.length) {
-          photoList.innerHTML = `<div class="empty-message">No approved photo locations found yet.</div>`;
-          return;
-        }
+    .photo-card-meta {
+      color: #667085;
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
 
-        approvedRows.forEach(item => {
-          const lat = parseFloat(item.lat);
-          const lng = parseFloat(item.lng);
+    .photo-card-distance {
+      margin-top: 8px;
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 900;
+      color: #f47b26;
+    }
 
-          const marker = L.marker([lat, lng]).addTo(markerLayer);
-          marker.bindPopup(buildPopup(item), {
-            maxWidth: 270
-          });
+    .popup-photo {
+      width: 250px;
+    }
 
-          markers.push(marker);
-          photoList.appendChild(buildCard(item, marker));
-        });
+    .popup-photo img {
+      width: 100%;
+      max-height: 170px;
+      object-fit: cover;
+      border-radius: 12px;
+      display: block;
+      margin-bottom: 8px;
+    }
 
-        const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.2));
-      },
-      error: function(error) {
-        console.error(error);
-        photoList.innerHTML = `<div class="empty-message">Could not load the photo sheet. Check the published CSV link.</div>`;
+    .popup-photo-title {
+      font-weight: 900;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .popup-photo-meta {
+      color: #667085;
+      font-size: 0.78rem;
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .loading-message,
+    .empty-message,
+    .photo-error {
+      padding: 14px;
+      border-radius: 14px;
+      background: #f9fafb;
+      border: 1px dashed #d0d5dd;
+      color: #667085;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .leaflet-marker-icon.farthest-marker {
+      filter: hue-rotate(165deg) saturate(1.6);
+    }
+
+    @media (max-width: 1150px) {
+      .photo-map-layout {
+        grid-template-columns: minmax(0, 1fr) 330px;
       }
+
+      .photo-list-panel {
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 850px) {
+      #photo-map-dashboard {
+        min-height: 100vh;
+      }
+
+      .photo-map-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+      }
+
+      .photo-map-stats {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .stat {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .photo-map-layout {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 0;
+      }
+
+      #photoMap {
+        height: 55vh;
+        min-height: 420px;
+      }
+
+      .photo-list-panel {
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
+        height: auto;
+        max-height: none;
+      }
+
+      .photo-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .farthest-photo-card {
+        margin-bottom: 18px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .photo-map-header h1 {
+        font-size: 1.55rem;
+      }
+
+      .photo-map-header p {
+        font-size: 0.92rem;
+      }
+
+      .photo-map-stats {
+        gap: 8px;
+      }
+
+      .stat {
+        min-width: 0;
+        padding: 10px;
+      }
+
+      .stat span {
+        font-size: 1.15rem;
+      }
+
+      #photoMap {
+        height: 430px;
+        min-height: 430px;
+      }
+
+      .photo-list {
+        grid-template-columns: 1fr;
+      }
+
+      .photo-card img {
+        height: 185px;
+      }
+
+      .popup-photo {
+        width: 210px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="photo-map-dashboard">
+    <div class="photo-map-header">
+      <div>
+        <div class="eyebrow">Photo Location Dashboard</div>
+        <h1>Submitted Photo Map</h1>
+        <p>Approved photo submissions plotted by location.</p>
+      </div>
+
+      <div class="photo-map-stats">
+        <div class="stat">
+          <span id="photoCount">0</span>
+          <label>Photos</label>
+        </div>
+        <div class="stat">
+          <span id="lastUpdated">—</span>
+          <label>Last Updated</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="photo-map-layout">
+      <div id="photoMap"></div>
+
+      <aside class="photo-list-panel">
+        <div class="panel-title">Farthest From Station 1</div>
+        <div id="farthestPhoto" class="farthest-photo-card">
+          Waiting for approved photo locations...
+        </div>
+
+        <div class="panel-title photo-list-title">Most Recent Photos</div>
+        <div id="photoList" class="photo-list"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij77BOpqbD-TL_4kQ14EU3ohZPJ-U1b0F1ZIt6_w4JFga58GAhse25tdaFEq6s1LGBtKdLK2/pub?gid=926950107&single=true&output=csv";
+
+    const STATION_1 = {
+      name: "Station 1",
+      lat: 34.74355136625181,
+      lng: -92.2843560208963
+    };
+
+    const map = L.map("photoMap", {
+      scrollWheelZoom: true
+    }).setView([34.7465, -92.2896], 10);
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 20,
+      attribution: "© OpenStreetMap © CARTO"
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+    const markers = [];
+
+    const photoList = document.getElementById("photoList");
+    const photoCount = document.getElementById("photoCount");
+    const lastUpdated = document.getElementById("lastUpdated");
+    const farthestPhoto = document.getElementById("farthestPhoto");
+
+    photoList.innerHTML = `<div class="loading-message">Loading approved photo submissions...</div>`;
+
+    function clean(value) {
+      return value ? String(value).trim() : "";
+    }
+
+    function escapeHtml(value) {
+      return clean(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getField(row, fieldName) {
+      const key = Object.keys(row).find(
+        k => k.trim().toLowerCase() === fieldName.toLowerCase()
+      );
+      return key ? row[key] : "";
+    }
+
+    function firstPhotoUrl(url) {
+      return clean(url).split(",")[0].trim();
+    }
+
+    function getDriveImageUrl(url) {
+      const raw = firstPhotoUrl(url);
+
+      if (!raw) return "";
+
+      const fileMatch = raw.match(/\/file\/d\/([^/]+)/);
+      const idMatch = raw.match(/[?&]id=([^&]+)/);
+      const fileId = fileMatch ? fileMatch[1] : idMatch ? idMatch[1] : "";
+
+      if (fileId) {
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+      }
+
+      return raw;
+    }
+
+    function nauticalMilesBetween(lat1, lng1, lat2, lng2) {
+      const earthRadiusNm = 3440.065;
+      const toRad = degrees => degrees * Math.PI / 180;
+
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return earthRadiusNm * c;
+    }
+
+    function parseDateValue(value) {
+      const raw = clean(value);
+
+      if (!raw) return 0;
+
+      const parsed = new Date(raw);
+      return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    }
+
+    function formatDate(value) {
+      const raw = clean(value);
+
+      if (!raw) return "Date not listed";
+
+      const parsed = new Date(raw);
+
+      if (isNaN(parsed.getTime())) return raw;
+
+      return parsed.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function photoImg(url, title) {
+      const image = getDriveImageUrl(url);
+
+      if (!image) return "";
+
+      return `
+        <img
+          src="${image}"
+          alt="${escapeHtml(title)}"
+          loading="lazy"
+          onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<div class=&quot;photo-error&quot;>Photo could not load. Check Google Drive sharing permissions.</div>');"
+        >
+      `;
+    }
+
+    function stationIconHtml(label) {
+      return L.divIcon({
+        className: "station-one-icon",
+        html: `
+          <div style="
+            width: 16px;
+            height: 16px;
+            background: #101828;
+            border: 3px solid #ffffff;
+            border-radius: 999px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+          "></div>
+        `,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+    }
+
+    function orangeIcon() {
+      return new L.Icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+    }
+
+    function blueIcon() {
+      return new L.Icon.Default();
+    }
+
+    const farthestMarkerIcon = orangeIcon();
+
+    L.marker([STATION_1.lat, STATION_1.lng], {
+      icon: stationIconHtml()
+    })
+      .addTo(map)
+      .bindPopup(`<strong>Station 1</strong><br>Distance calculated from here.`);
+
+    function buildPopup(item) {
+      const title = escapeHtml(item.title || "Submitted Photo");
+      const date = escapeHtml(formatDate(item.date_taken));
+      const submittedBy = escapeHtml(item.submitted_by);
+      const miles = Number(item.distance_nm).toFixed(1);
+
+      const metaParts = [];
+      metaParts.push(date);
+      if (submittedBy) metaParts.push(`Submitted by ${submittedBy}`);
+      metaParts.push(`${miles} nautical miles from Station 1`);
+
+      return `
+        <div class="popup-photo">
+          ${photoImg(item.photo_url, title)}
+          <div class="popup-photo-title">${title}</div>
+          <div class="popup-photo-meta">${metaParts.join(" • ")}</div>
+        </div>
+      `;
+    }
+
+    function buildCard(item, marker) {
+      const title = escapeHtml(item.title || "Submitted Photo");
+      const date = escapeHtml(formatDate(item.date_taken));
+      const submittedBy = escapeHtml(item.submitted_by);
+      const miles = Number(item.distance_nm).toFixed(1);
+
+      const card = document.createElement("div");
+      card.className = "photo-card";
+
+      card.innerHTML = `
+        ${photoImg(item.photo_url, title)}
+        <div class="photo-card-body">
+          <div class="photo-card-title">${title}</div>
+          <div class="photo-card-meta">
+            ${date}${submittedBy ? ` • ${submittedBy}` : ""}
+          </div>
+          <div class="photo-card-distance">${miles} nautical miles from Station 1</div>
+        </div>
+      `;
+
+      card.addEventListener("click", () => {
+        map.setView(marker.getLatLng(), 13, { animate: true });
+        marker.openPopup();
+      });
+
+      return card;
+    }
+
+    function buildFarthestCard(item, marker) {
+      if (!item) {
+        farthestPhoto.innerHTML = `No approved photo locations found yet.`;
+        farthestPhoto.onclick = null;
+        return;
+      }
+
+      const title = escapeHtml(item.title || "Submitted Photo");
+      const date = escapeHtml(formatDate(item.date_taken));
+      const submittedBy = escapeHtml(item.submitted_by);
+      const miles = Number(item.distance_nm).toFixed(1);
+
+      farthestPhoto.innerHTML = `
+        <div class="farthest-label">Current Longest Distance</div>
+        <div class="farthest-name">${title}</div>
+        <div class="farthest-meta">
+          <strong>Date:</strong> ${date}<br>
+          ${submittedBy ? `<strong>Name:</strong> ${submittedBy}<br>` : ""}
+          <strong>From:</strong> Station 1
+        </div>
+        <div class="farthest-miles">${miles} nautical miles away</div>
+      `;
+
+      farthestPhoto.onclick = () => {
+        map.setView(marker.getLatLng(), 10, { animate: true });
+        marker.openPopup();
+      };
+    }
+
+    function loadPhotos() {
+      Papa.parse(SHEET_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          markerLayer.clearLayers();
+          markers.length = 0;
+          photoList.innerHTML = "";
+
+          const rows = results.data
+            .map(row => {
+              const lat = parseFloat(getField(row, "Latitude"));
+              const lng = parseFloat(getField(row, "Longitude"));
+              const dateTaken = getField(row, "Date Taken");
+              const timestamp = getField(row, "Timestamp");
+              const submittedSort = parseDateValue(timestamp) || parseDateValue(dateTaken);
+
+              return {
+                title: getField(row, "Location Name"),
+                photo_url: getField(row, "Photo(s)"),
+                lat,
+                lng,
+                description: "",
+                date_taken: dateTaken,
+                timestamp,
+                submitted_by: getField(row, "Your Name"),
+                status: getField(row, "Status"),
+                submitted_sort: submittedSort
+              };
+            })
+            .filter(row => {
+              const status = clean(row.status).toLowerCase();
+
+              return (
+                status !== "rejected" &&
+                !isNaN(row.lat) &&
+                !isNaN(row.lng)
+              );
+            })
+            .map(row => ({
+              ...row,
+              distance_nm: nauticalMilesBetween(
+                STATION_1.lat,
+                STATION_1.lng,
+                row.lat,
+                row.lng
+              )
+            }));
+
+          rows.sort((a, b) => b.submitted_sort - a.submitted_sort);
+
+          photoCount.textContent = rows.length;
+          lastUpdated.textContent = new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+          if (!rows.length) {
+            photoList.innerHTML = `<div class="empty-message">No approved photo locations found yet. Check Latitude, Longitude, and Status columns.</div>`;
+            buildFarthestCard(null, null);
+            return;
+          }
+
+          const farthest = rows.reduce((winner, item) => {
+            return item.distance_nm > winner.distance_nm ? item : winner;
+          }, rows[0]);
+
+          let farthestMarker = null;
+
+          rows.forEach(item => {
+            const isFarthest = item === farthest;
+
+            const marker = L.marker([item.lat, item.lng], {
+              icon: isFarthest ? farthestMarkerIcon : blueIcon()
+            }).addTo(markerLayer);
+
+            marker.bindPopup(buildPopup(item), {
+              maxWidth: 280
+            });
+
+            if (isFarthest) {
+              farthestMarker = marker;
+            }
+
+            markers.push(marker);
+            photoList.appendChild(buildCard(item, marker));
+          });
+
+          buildFarthestCard(farthest, farthestMarker);
+
+          const group = L.featureGroup(markers);
+          map.fitBounds(group.getBounds().pad(0.22));
+
+          setTimeout(() => {
+            map.invalidateSize();
+          }, 250);
+        },
+        error: function(error) {
+          console.error(error);
+          photoList.innerHTML = `<div class="empty-message">Could not load the photo sheet. Check the published CSV link.</div>`;
+          buildFarthestCard(null, null);
+        }
+      });
+    }
+
+    loadPhotos();
+    setInterval(loadPhotos, 300000);
+
+    window.addEventListener("resize", () => {
+      setTimeout(() => map.invalidateSize(), 250);
     });
-  }
-
-  loadPhotos();
-
-  setInterval(loadPhotos, 300000);
-</script>
+  </script>
+</body>
+</html>
