@@ -383,26 +383,27 @@
         <p>Approved photo submissions plotted by location.</p>
       </div>
 
-      <div class="photo-map-stats">
-        <div class="stat">
-          <span id="photoCount">0</span>
-          <label>Photos</label>
-        </div>
-        <div class="stat">
-          <span id="lastUpdated">—</span>
-          <label>Last Updated</label>
-        </div>
-      </div>
-    </div>
+ <div class="photo-map-stats">
+  <div class="stat">
+    <span id="photoCount">0</span>
+    <label>Photos</label>
+  </div>
+
+  <div class="stat stat-wide" id="farthestPhoto">
+    <span>—</span>
+    <label>Farthest From Station 1</label>
+  </div>
+
+  <div class="stat">
+    <span id="lastUpdated">—</span>
+    <label>Last Updated</label>
+  </div>
+</div>
 
     <div class="photo-map-layout">
       <div id="photoMap"></div>
 
       <aside class="photo-list-panel">
-        <div class="panel-title">Farthest From Station 1</div>
-        <div id="farthestPhoto" class="farthest-photo-card">
-          Waiting for approved photo locations...
-        </div>
 
         <div class="panel-title photo-list-title">Most Recent Photos</div>
         <div id="photoList" class="photo-list"></div>
