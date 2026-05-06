@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Submitted Photo Map</title>
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -72,6 +69,7 @@
       gap: 12px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      align-items: stretch;
     }
 
     .stat {
@@ -95,6 +93,42 @@
       color: rgba(255, 255, 255, 0.72);
       text-transform: uppercase;
       letter-spacing: 0.08em;
+    }
+
+    .stat-wide {
+      min-width: 280px;
+      max-width: 360px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .stat-wide span {
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .stat-wide .farthest-header-name {
+      display: block;
+      font-size: 1rem;
+      font-weight: 950;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .stat-wide .farthest-header-meta {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.35;
+    }
+
+    .stat-wide .farthest-header-miles {
+      display: block;
+      margin-top: 5px;
+      color: #f47b26;
+      font-size: 0.82rem;
+      font-weight: 950;
     }
 
     .photo-map-layout {
@@ -129,53 +163,7 @@
     }
 
     .photo-list-title {
-      margin-top: 20px;
-    }
-
-    .farthest-photo-card {
-      border-radius: 22px;
-      padding: 15px;
-      margin-bottom: 20px;
-      background: linear-gradient(135deg, #fff7ed, #ffffff);
-      border: 1px solid rgba(244, 123, 38, 0.38);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-      cursor: pointer;
-    }
-
-    .farthest-label {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #f47b26;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .farthest-name {
-      font-size: 1.12rem;
-      font-weight: 950;
-      color: #101828;
-      margin-bottom: 6px;
-      line-height: 1.2;
-    }
-
-    .farthest-meta {
-      font-size: 0.88rem;
-      color: #475467;
-      line-height: 1.45;
-    }
-
-    .farthest-miles {
-      margin-top: 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 11px;
-      border-radius: 999px;
-      background: #f47b26;
-      color: #fff;
-      font-size: 0.85rem;
-      font-weight: 900;
+      margin-top: 4px;
     }
 
     .photo-list {
@@ -269,10 +257,6 @@
       line-height: 1.4;
     }
 
-    .leaflet-marker-icon.farthest-marker {
-      filter: hue-rotate(165deg) saturate(1.6);
-    }
-
     @media (max-width: 1150px) {
       .photo-map-layout {
         grid-template-columns: minmax(0, 1fr) 330px;
@@ -283,11 +267,7 @@
       }
     }
 
-    @media (max-width: 850px) {
-      #photo-map-dashboard {
-        min-height: 100vh;
-      }
-
+    @media (max-width: 900px) {
       .photo-map-header {
         flex-direction: column;
         align-items: flex-start;
@@ -302,6 +282,12 @@
       .stat {
         flex: 1;
         min-width: 120px;
+      }
+
+      .stat-wide {
+        min-width: 100%;
+        max-width: none;
+        order: 3;
       }
 
       .photo-map-layout {
@@ -325,10 +311,6 @@
 
       .photo-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .farthest-photo-card {
-        margin-bottom: 18px;
       }
     }
 
@@ -354,6 +336,10 @@
         font-size: 1.15rem;
       }
 
+      .stat-wide {
+        min-width: 100%;
+      }
+
       #photoMap {
         height: 430px;
         min-height: 430px;
@@ -371,136 +357,6 @@
         width: 210px;
       }
     }
-    .farthest-photo-card {
-  border-radius: 20px;
-  padding: 14px;
-  margin-bottom: 22px;
-  background: linear-gradient(135deg, #fff7ed, #ffffff);
-  border: 1px solid rgba(244, 123, 38, 0.35);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-}
-
-.farthest-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #f47b26;
-  font-weight: 900;
-  margin-bottom: 6px;
-}
-
-.farthest-name {
-  font-size: 1.05rem;
-  font-weight: 900;
-  color: #101828;
-  margin-bottom: 6px;
-}
-
-.farthest-meta {
-  font-size: 0.86rem;
-  color: #475467;
-  line-height: 1.4;
-}
-
-.farthest-miles {
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: #f47b26;
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 900;
-}
-
-.photo-list-title {
-  margin-top: 4px;
-}
-
-.photo-card-distance {
-  margin-top: 8px;
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #f47b26;
-}
-
-@media (max-width: 1200px) {
-  .photo-map-layout {
-    grid-template-columns: minmax(0, 1fr) 320px;
-  }
-
-  .photo-list-panel {
-    padding: 14px;
-  }
-}
-
-@media (max-width: 900px) {
-  #photo-map-dashboard {
-    border-radius: 18px;
-  }
-
-  .photo-map-header {
-    padding: 20px;
-  }
-
-  .photo-map-stats {
-    width: 100%;
-  }
-
-  .stat {
-    flex: 1;
-    min-width: 130px;
-  }
-
-  .photo-map-layout {
-    display: flex;
-    flex-direction: column;
-  }
-
-  #photoMap {
-    min-height: 55vh;
-    height: 55vh;
-  }
-
-  .photo-list-panel {
-    max-height: none;
-  }
-}
-
-@media (max-width: 520px) {
-  .photo-map-header h2 {
-    font-size: 1.55rem;
-  }
-
-  .photo-map-header p {
-    font-size: 0.92rem;
-  }
-
-  .stat {
-    min-width: 0;
-    padding: 10px;
-  }
-
-  .stat span {
-    font-size: 1.15rem;
-  }
-
-  #photoMap {
-    min-height: 420px;
-    height: 420px;
-  }
-
-  .photo-card img {
-    height: 180px;
-  }
-
-  .popup-photo {
-    width: 210px;
-  }
-}
   </style>
 </head>
 
@@ -513,30 +369,28 @@
         <p>Approved photo submissions plotted by location.</p>
       </div>
 
- <div class="photo-map-stats">
-  <div class="stat">
-    <span id="photoCount">0</span>
-    <label>Photos</label>
-  </div>
+      <div class="photo-map-stats">
+        <div class="stat">
+          <span id="photoCount">0</span>
+          <label>Photos</label>
+        </div>
 
-  <div class="stat stat-wide" id="farthestPhoto">
-    <span>—</span>
-    <label>Farthest From Station 1</label>
-  </div>
+        <div class="stat stat-wide" id="farthestPhoto">
+          <span>—</span>
+          <label>Farthest From Station 1</label>
+        </div>
 
-  <div class="stat">
-    <span id="lastUpdated">—</span>
-    <label>Last Updated</label>
-  </div>
-</div>
+        <div class="stat">
+          <span id="lastUpdated">—</span>
+          <label>Last Updated</label>
+        </div>
+      </div>
+    </div>
 
-</div>
-
-<div class="photo-map-layout">
+    <div class="photo-map-layout">
       <div id="photoMap"></div>
 
       <aside class="photo-list-panel">
-
         <div class="panel-title photo-list-title">Most Recent Photos</div>
         <div id="photoList" class="photo-list"></div>
       </aside>
@@ -631,7 +485,6 @@
 
     function parseDateValue(value) {
       const raw = clean(value);
-
       if (!raw) return 0;
 
       const parsed = new Date(raw);
@@ -640,11 +493,9 @@
 
     function formatDate(value) {
       const raw = clean(value);
-
       if (!raw) return "Date not listed";
 
       const parsed = new Date(raw);
-
       if (isNaN(parsed.getTime())) return raw;
 
       return parsed.toLocaleDateString([], {
@@ -669,7 +520,7 @@
       `;
     }
 
-    function stationIconHtml(label) {
+    function stationIconHtml() {
       return L.divIcon({
         className: "station-one-icon",
         html: `
@@ -759,38 +610,14 @@
     }
 
     function buildFarthestCard(item, marker) {
-  if (!item) {
-    farthestPhoto.innerHTML = `
-      <span>—</span>
-      <label>Farthest From Station 1</label>
-    `;
-    farthestPhoto.onclick = null;
-    return;
-  }
-
-  const title = escapeHtml(item.title || "Submitted Photo");
-  const date = escapeHtml(formatDate(item.date_taken));
-  const submittedBy = escapeHtml(item.submitted_by);
-  const miles = Number(item.distance_nm).toFixed(1);
-
-  farthestPhoto.innerHTML = `
-    <span>
-      <span class="farthest-header-name">${title}</span>
-      <span class="farthest-header-meta">
-        ${submittedBy ? `${submittedBy} • ` : ""}${date}
-      </span>
-      <span class="farthest-header-miles">
-        ${miles} nautical miles away
-      </span>
-    </span>
-    <label>Farthest From Station 1</label>
-  `;
-
-  farthestPhoto.onclick = () => {
-    map.setView(marker.getLatLng(), 10, { animate: true });
-    marker.openPopup();
-  };
-}
+      if (!item) {
+        farthestPhoto.innerHTML = `
+          <span>—</span>
+          <label>Farthest From Station 1</label>
+        `;
+        farthestPhoto.onclick = null;
+        return;
+      }
 
       const title = escapeHtml(item.title || "Submitted Photo");
       const date = escapeHtml(formatDate(item.date_taken));
@@ -798,17 +625,20 @@
       const miles = Number(item.distance_nm).toFixed(1);
 
       farthestPhoto.innerHTML = `
-        <div class="farthest-label">Current Longest Distance</div>
-        <div class="farthest-name">${title}</div>
-        <div class="farthest-meta">
-          <strong>Date:</strong> ${date}<br>
-          ${submittedBy ? `<strong>Name:</strong> ${submittedBy}<br>` : ""}
-          <strong>From:</strong> Station 1
-        </div>
-        <div class="farthest-miles">${miles} nautical miles away</div>
+        <span>
+          <span class="farthest-header-name">${title}</span>
+          <span class="farthest-header-meta">
+            ${submittedBy ? `${submittedBy} • ` : ""}${date}
+          </span>
+          <span class="farthest-header-miles">
+            ${miles} nautical miles away
+          </span>
+        </span>
+        <label>Farthest From Station 1</label>
       `;
 
       farthestPhoto.onclick = () => {
+        if (!marker) return;
         map.setView(marker.getLatLng(), 10, { animate: true });
         marker.openPopup();
       };
@@ -835,8 +665,8 @@
               return {
                 title: getField(row, "Location Name"),
                 photo_url: getField(row, "Photo(s)"),
-                lat: getField(row, "Latitude"),
-                lng: getField(row, "Longitude"),
+                lat: lat,
+                lng: lng,
                 description: "",
                 date_taken: dateTaken,
                 timestamp,
@@ -850,8 +680,8 @@
 
               return (
                 status !== "rejected" &&
-                !isNaN(row.lat) &&
-                !isNaN(row.lng)
+                Number.isFinite(row.lat) &&
+                Number.isFinite(row.lng)
               );
             })
             .map(row => ({
