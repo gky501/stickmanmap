@@ -675,8 +675,8 @@
               return {
                 title: getField(row, "Location Name"),
                 photo_url: getField(row, "Photo(s)"),
-                lat,
-                lng,
+                lat: getField(row, "Latitude"),
+                lng: getField(row, "Longatude"),
                 description: "",
                 date_taken: dateTaken,
                 timestamp,
