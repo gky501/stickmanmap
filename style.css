@@ -1,0 +1,364 @@
+* {
+      box-sizing: border-box;
+    }
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #eef2f7;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172033;
+}
+
+#photo-map-dashboard {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  background: #f5f7fb;
+  overflow: hidden;
+}
+
+    .photo-map-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #101828, #1f2937);
+  color: #fff;
+  min-height: 128px;
+}
+
+    .photo-map-header h1 {
+      margin: 4px 0 4px;
+      font-size: clamp(1.6rem, 3vw, 2.6rem);
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+    }
+
+    .photo-map-header p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.98rem;
+    }
+
+    .eyebrow {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #f47b26;
+      font-weight: 900;
+    }
+
+    .photo-map-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: stretch;
+    }
+
+    .stat {
+      min-width: 120px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 12px 14px;
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 1.35rem;
+      font-weight: 900;
+    }
+
+    .stat label {
+      display: block;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.72);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-wide {
+      min-width: 280px;
+      max-width: 360px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .stat-wide span {
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .stat-wide .farthest-header-name {
+      display: block;
+      font-size: 1rem;
+      font-weight: 950;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .stat-wide .farthest-header-meta {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.35;
+    }
+
+    .stat-wide .farthest-header-miles {
+      display: block;
+      margin-top: 5px;
+      color: #f47b26;
+      font-size: 0.82rem;
+      font-weight: 950;
+    }
+
+  .photo-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  height: calc(100vh - 128px);
+  min-height: 0;
+}
+
+#photoMap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #dce3ef;
+}
+
+.photo-list-panel {
+  background: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  padding: 18px;
+  overflow-y: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.panel-title {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #667085;
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.photo-list-title {
+  margin-top: 4px;
+}
+
+.photo-list {
+  display: grid;
+  gap: 12px;
+}
+
+.photo-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.photo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+
+.photo-card img {
+  width: 100%;
+  height: 145px;
+  object-fit: cover;
+  display: block;
+  background: #e5e7eb;
+}
+
+.photo-card-body {
+  padding: 12px;
+}
+
+.photo-card-title {
+  font-weight: 900;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: #101828;
+}
+
+.photo-card-meta {
+  color: #667085;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.photo-card-distance {
+  margin-top: 8px;
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #f47b26;
+}
+
+.popup-photo {
+  width: 250px;
+}
+
+.popup-photo img {
+  width: 100%;
+  max-height: 170px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.popup-photo-title {
+  font-weight: 900;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.popup-photo-meta {
+  color: #667085;
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.loading-message,
+.empty-message,
+.photo-error {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f9fafb;
+  border: 1px dashed #d0d5dd;
+  color: #667085;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 1150px) {
+  .photo-map-layout {
+    grid-template-columns: minmax(0, 1fr) 330px;
+  }
+
+  .photo-list-panel {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  .photo-map-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    min-height: 220px;
+  }
+
+  .photo-map-stats {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .stat {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .stat-wide {
+    min-width: 100%;
+    max-width: none;
+    order: 3;
+  }
+
+  .photo-map-layout {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 220px);
+    min-height: 0;
+  }
+
+  #photoMap {
+    height: 58%;
+    min-height: 0;
+  }
+
+  .photo-list-panel {
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    height: 42%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .photo-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .photo-map-header {
+    min-height: 235px;
+  }
+
+  .photo-map-header h1 {
+    font-size: 1.55rem;
+  }
+
+  .photo-map-header p {
+    font-size: 0.92rem;
+  }
+
+  .photo-map-stats {
+    gap: 8px;
+  }
+
+  .stat {
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .stat span {
+    font-size: 1.15rem;
+  }
+
+  .stat-wide {
+    min-width: 100%;
+  }
+
+  .photo-map-layout {
+    height: calc(100vh - 235px);
+  }
+
+  #photoMap {
+    height: 55%;
+    min-height: 0;
+  }
+
+  .photo-list-panel {
+    height: 45%;
+  }
+
+  .photo-list {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-card img {
+    height: 185px;
+  }
+
+  .popup-photo {
+    width: 210px;
+  }
+}
