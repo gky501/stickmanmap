@@ -15,8 +15,9 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij
       attribution: "© OpenStreetMap © CARTO"
     }).addTo(map);
 
-    const markerLayer = L.layerGroup().addTo(map);
-    const markers = [];
+const markerLayer = L.layerGroup().addTo(map);
+const lineLayer = L.layerGroup().addTo(map);
+const markers = [];
 
     const photoList = document.getElementById("photoList");
     const photoCount = document.getElementById("photoCount");
@@ -243,16 +244,64 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij
         marker.openPopup();
       };
     }
+function greatCirclePoints(startLat, startLng, endLat, endLng, segments = 40) {
+  const toRad = degrees => degrees * Math.PI / 180;
+  const toDeg = radians => radians * 180 / Math.PI;
 
+  const lat1 = toRad(startLat);
+  const lng1 = toRad(startLng);
+  const lat2 = toRad(endLat);
+  const lng2 = toRad(endLng);
+
+  const d =
+    2 *
+    Math.asin(
+      Math.sqrt(
+        Math.sin((lat2 - lat1) / 2) ** 2 +
+        Math.cos(lat1) *
+          Math.cos(lat2) *
+          Math.sin((lng2 - lng1) / 2) ** 2
+      )
+    );
+
+  if (d === 0) return [[startLat, startLng], [endLat, endLng]];
+
+  const points = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const f = i / segments;
+
+    const A = Math.sin((1 - f) * d) / Math.sin(d);
+    const B = Math.sin(f * d) / Math.sin(d);
+
+    const x =
+      A * Math.cos(lat1) * Math.cos(lng1) +
+      B * Math.cos(lat2) * Math.cos(lng2);
+
+    const y =
+      A * Math.cos(lat1) * Math.sin(lng1) +
+      B * Math.cos(lat2) * Math.sin(lng2);
+
+    const z = A * Math.sin(lat1) + B * Math.sin(lat2);
+
+    const lat = Math.atan2(z, Math.sqrt(x * x + y * y));
+    const lng = Math.atan2(y, x);
+
+    points.push([toDeg(lat), toDeg(lng)]);
+  }
+
+  return points;
+}
     function loadPhotos() {
       Papa.parse(SHEET_CSV_URL, {
         download: true,
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-          markerLayer.clearLayers();
-          markers.length = 0;
-          photoList.innerHTML = "";
+markerLayer.clearLayers();
+lineLayer.clearLayers();
+markers.length = 0;
+photoList.innerHTML = "";
 
           const rows = results.data
             .map(row => {
@@ -320,7 +369,18 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij
             const marker = L.marker([item.lat, item.lng], {
               icon: isFarthest ? farthestMarkerIcon : blueIcon()
             }).addTo(markerLayer);
+const linePoints = greatCirclePoints(
+  STATION_1.lat,
+  STATION_1.lng,
+  item.lat,
+  item.lng
+);
 
+L.polyline(linePoints, {
+  color: isFarthest ? "#f47b26" : "#2563eb",
+  weight: isFarthest ? 1.25 : 1.15,
+  opacity: isFarthest ? 1 : 1,
+}).addTo(lineLayer);
             marker.bindPopup(buildPopup(item), {
               maxWidth: 280
             });
