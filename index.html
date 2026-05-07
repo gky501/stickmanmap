@@ -1,18 +1,24 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submitted Photo Map</title>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="Style.css" />
+</head>
 
-
-
+<body>
   <div id="photo-map-dashboard">
     <div class="photo-map-header">
       <div>
-        <div class="eyebrow">Visit metroems.io/sm26</div>
-        <h1>Stickman Photo Map</h1>
-        <p>Submit your photos to Aaron via Teams or Text.</p>
+        <div class="eyebrow">Photo Location Dashboard</div>
+        <h1>Submitted Photo Map</h1>
+        <p>Approved photo submissions plotted by location.</p>
       </div>
 
       <div class="photo-map-stats">
@@ -42,3 +48,14 @@
       </aside>
     </div>
   </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- Your JS - must come last -->
+  <script src="Javascript.js"></script>
+</body>
+</html>
