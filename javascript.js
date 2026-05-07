@@ -411,7 +411,7 @@ L.polyline(linePoints, {
     }
 
     loadPhotos();
-    setInterval(loadPhotos, 300000);
+    setInterval(loadPhotos, 100000);
 
     window.addEventListener("resize", () => {
       setTimeout(() => map.invalidateSize(), 250);
