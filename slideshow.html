@@ -526,68 +526,111 @@
     }
 
     function createFloatingPhoto() {
-      const item = pickPhoto();
-      if (!item) return;
+  const item = pickPhoto();
+  if (!item) return;
 
-      const card = document.createElement("div");
-      card.className = item.year === "2025" ? "floating-photo legacy-2025" : "floating-photo";
+  const testImage = new Image();
+  testImage.decoding = "async";
+  testImage.src = item.image_url;
 
-      const startX = `${randomBetween(-18, 18)}vw`;
-      const startY = `${randomBetween(88, 112)}vh`;
-      const endX = `${randomBetween(-18, 18)}vw`;
-      const endY = `${randomBetween(-28, -12)}vh`;
-      const left = `${randomBetween(0, 78)}vw`;
-      const top = `${randomBetween(10, 68)}vh`;
-      const rot = `${randomBetween(-9, 9)}deg`;
-      const duration = `${randomBetween(12, 20)}s`;
+  testImage.onload = () => {
+    const card = document.createElement("div");
+    card.className = item.year === "2025"
+      ? "floating-photo legacy-2025 is-loading"
+      : "floating-photo is-loading";
 
-      card.style.left = left;
-      card.style.top = top;
-      card.style.setProperty("--start-x", startX);
-      card.style.setProperty("--start-y", startY);
-      card.style.setProperty("--end-x", endX);
-      card.style.setProperty("--end-y", endY);
-      card.style.setProperty("--rot", rot);
-      card.style.setProperty("--duration", duration);
+    const startX = `${randomBetween(-18, 18)}vw`;
+    const startY = `${randomBetween(88, 112)}vh`;
+    const endX = `${randomBetween(-18, 18)}vw`;
+    const endY = `${randomBetween(-28, -12)}vh`;
+    const left = `${randomBetween(0, 78)}vw`;
+    const top = `${randomBetween(10, 68)}vh`;
+    const rot = `${randomBetween(-9, 9)}deg`;
+    const duration = `${randomBetween(12, 20)}s`;
 
-      card.innerHTML = `
-        <img src="${item.image_url}" alt="${escapeHtml(item.title)}">
-        <div class="caption">
-          <div class="caption-title">${escapeHtml(item.title)}</div>
-          <div class="caption-meta">${escapeHtml(item.date)}${item.name ? ` • ${escapeHtml(item.name)}` : ""}</div>
-        </div>
-      `;
+    card.style.left = left;
+    card.style.top = top;
+    card.style.setProperty("--start-x", startX);
+    card.style.setProperty("--start-y", startY);
+    card.style.setProperty("--end-x", endX);
+    card.style.setProperty("--end-y", endY);
+    card.style.setProperty("--rot", rot);
+    card.style.setProperty("--duration", duration);
 
-      card.querySelector("img").addEventListener("error", () => {
-        card.remove();
+    card.innerHTML = `
+      <img src="${item.image_url}" alt="${escapeHtml(item.title)}">
+      <div class="caption">
+        <div class="caption-title">${escapeHtml(item.title)}</div>
+        <div class="caption-meta">${escapeHtml(item.date)}${item.name ? ` • ${escapeHtml(item.name)}` : ""}</div>
+      </div>
+    `;
+
+    stage.appendChild(card);
+
+    const realImage = card.querySelector("img");
+
+    realImage.onload = () => {
+      requestAnimationFrame(() => {
+        card.classList.remove("is-loading");
+        card.classList.add("is-loaded");
+
+        // Forces Chrome to repaint the animated image.
+        card.style.transform = "translateZ(0)";
       });
+    };
 
-      stage.appendChild(card);
+    realImage.onerror = () => {
+      card.remove();
+    };
 
-      setTimeout(() => {
-        card.remove();
-      }, parseFloat(duration) * 1000 + 500);
+    // If browser already has it cached, onload may not fire again.
+    if (realImage.complete && realImage.naturalWidth > 0) {
+      requestAnimationFrame(() => {
+        card.classList.remove("is-loading");
+        card.classList.add("is-loaded");
+        card.style.transform = "translateZ(0)";
+      });
     }
 
-    function showHeroPhoto() {
-      if (!photos.length) return;
+    setTimeout(() => {
+      card.remove();
+    }, parseFloat(duration) * 1000 + 500);
+  };
 
-      const item = photos[heroIndex % photos.length];
-      heroIndex += 1;
+  testImage.onerror = () => {
+    console.warn("Floating image failed to preload:", item.image_url);
+  };
+}
+function showHeroPhoto() {
+  if (!photos.length) return;
 
-      heroImage.classList.remove("active");
+  const item = photos[heroIndex % photos.length];
+  heroIndex += 1;
 
-      setTimeout(() => {
-        heroImage.src = item.image_url;
-        heroImage.alt = item.title || "Submitted photo";
-        heroTitle.textContent = item.title || "Submitted Photo";
-        heroMeta.textContent = `${item.date}${item.name ? ` • ${item.name}` : ""}`;
+  const preload = new Image();
+  preload.decoding = "async";
+  preload.src = item.image_url;
 
-        requestAnimationFrame(() => {
-          heroImage.classList.add("active");
-        });
-      }, 350);
-    }
+  preload.onload = () => {
+    heroImage.classList.remove("active");
+
+    setTimeout(() => {
+      heroImage.src = item.image_url;
+      heroImage.alt = item.title || "Submitted photo";
+      heroTitle.textContent = item.title || "Submitted Photo";
+      heroMeta.textContent = `${item.date}${item.name ? ` • ${item.name}` : ""}`;
+
+      requestAnimationFrame(() => {
+        heroImage.classList.add("active");
+        heroImage.style.transform = "translateZ(0) scale(1)";
+      });
+    }, 350);
+  };
+
+  preload.onerror = () => {
+    console.warn("Hero image failed to preload:", item.image_url);
+  };
+}
 
     function startSlideshow() {
       if (floatingTimer) clearInterval(floatingTimer);
