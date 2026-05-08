@@ -266,6 +266,19 @@
       border: 1px solid rgba(255,255,255,0.18);
       backdrop-filter: blur(14px);
     }
+    .floating-photo.legacy-2025 {
+      opacity: 0.42;
+      z-index: 0;
+      border-color: rgba(255,255,255,0.12);
+    }
+    
+    .floating-photo.legacy-2025 img {
+      filter: grayscale(1) contrast(0.95) brightness(0.85);
+    }
+    
+    .floating-photo.legacy-2025::after {
+      background: linear-gradient(to top, rgba(0,0,0,0.72), transparent 55%);
+    }
 
     .hidden {
       display: none;
@@ -382,6 +395,7 @@
 
   <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij77BOpqbD-TL_4kQ14EU3ohZPJ-U1b0F1ZIt6_w4JFga58GAhse25tdaFEq6s1LGBtKdLK2/pub?gid=926950107&single=true&output=csv";
+    const SHEET_2025_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij77BOpqbD-TL_4kQ14EU3ohZPJ-U1b0F1ZIt6_w4JFga58GAhse25tdaFEq6s1LGBtKdLK2/pub?output=csv&sheet=2025";
 
     const stage = document.getElementById("stage");
     const photoCount = document.getElementById("photoCount");
@@ -394,6 +408,7 @@
     const heroMeta = document.getElementById("heroMeta");
 
     let photos = [];
+    let backgroundPhotos2025 = [];
     let heroIndex = 0;
     let floatingTimer = null;
     let heroTimer = null;
@@ -472,8 +487,11 @@
     }
 
     function pickPhoto() {
-      if (!photos.length) return null;
-      return photos[Math.floor(Math.random() * photos.length)];
+      const source = backgroundPhotos2025.length ? backgroundPhotos2025 : photos;
+    
+      if (!source.length) return null;
+    
+      return source[Math.floor(Math.random() * source.length)];
     }
 
     function createFloatingPhoto() {
@@ -481,7 +499,7 @@
       if (!item) return;
 
       const card = document.createElement("div");
-      card.className = "floating-photo";
+      card.className = item.year === "2025" ? "floating-photo legacy-2025" : "floating-photo";
 
       const startX = `${randomBetween(-18, 18)}vw`;
       const startY = `${randomBetween(88, 112)}vh`;
@@ -555,6 +573,37 @@
       floatingTimer = setInterval(createFloatingPhoto, 1700);
       heroTimer = setInterval(showHeroPhoto, 6500);
     }
+        function parsePhotoRows(results, yearLabel = "2026") {
+      return results.data
+        .map(row => {
+          const status = clean(getField(row, "Status")).toLowerCase();
+          const title = getField(row, "Location Name");
+          const photoUrls = splitPhotoUrls(getField(row, "Photo(s)"));
+          const dateTaken = getField(row, "Date Taken");
+          const timestamp = getField(row, "Timestamp");
+          const name = getField(row, "Your Name");
+
+          return photoUrls.map(url => ({
+            status,
+            title,
+            name,
+            date_taken: dateTaken,
+            timestamp,
+            sort_date: parseDateValue(timestamp) || parseDateValue(dateTaken),
+            image_url: getDriveImageUrl(url),
+            year: yearLabel
+          }));
+        })
+        .flat()
+        .filter(item => {
+          return item.status !== "rejected" && item.image_url;
+        })
+        .sort((a, b) => b.sort_date - a.sort_date)
+        .map(item => ({
+          ...item,
+          date: formatDate(item.date_taken || item.timestamp)
+        }));
+    }
 
     function loadPhotos() {
       Papa.parse(SHEET_CSV_URL, {
@@ -562,41 +611,10 @@
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-          const rows = results.data
-            .map(row => {
-              const status = clean(getField(row, "Status")).toLowerCase();
-              const title = getField(row, "Location Name");
-              const photoUrls = splitPhotoUrls(getField(row, "Photo(s)"));
-              const dateTaken = getField(row, "Date Taken");
-              const timestamp = getField(row, "Timestamp");
-              const name = getField(row, "Your Name");
-
-              return photoUrls.map(url => ({
-                status,
-                title,
-                name,
-                date_taken: dateTaken,
-                timestamp,
-                sort_date: parseDateValue(timestamp) || parseDateValue(dateTaken),
-                image_url: getDriveImageUrl(url)
-              }));
-            })
-            .flat()
-            .filter(item => {
-              return (
-                item.status !== "rejected" &&
-                item.image_url
-              );
-            })
-            .sort((a, b) => b.sort_date - a.sort_date)
-            .map(item => ({
-              ...item,
-              date: formatDate(item.date_taken || item.timestamp)
-            }));
-
-          photos = rows;
+          photos = parsePhotoRows(results, "2026");
 
           photoCount.textContent = photos.length;
+
           lastUpdated.textContent = `Last updated ${new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit"
@@ -604,26 +622,48 @@
 
           if (!photos.length) {
             emptyState.classList.remove("hidden");
-            statusText.textContent = "No approved photos found.";
+            statusText.textContent = "No approved 2026 photos found.";
             return;
           }
 
           emptyState.classList.add("hidden");
-          statusText.textContent = `Displaying ${photos.length} approved submitted photo${photos.length === 1 ? "" : "s"}.`;
+          statusText.textContent = `Displaying ${photos.length} current photo${photos.length === 1 ? "" : "s"}.`;
 
           startSlideshow();
         },
         error: function(error) {
           console.error(error);
           emptyState.classList.remove("hidden");
-          statusText.textContent = "Could not load the published Google Sheet.";
+          statusText.textContent = "Could not load the 2026 published Google Sheet.";
+        }
+      });
+    }
+
+    function load2025BackgroundPhotos() {
+      Papa.parse(SHEET_2025_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          backgroundPhotos2025 = parsePhotoRows(results, "2025");
+
+          if (backgroundPhotos2025.length) {
+            statusText.textContent = `Displaying ${photos.length} current photo${photos.length === 1 ? "" : "s"} with ${backgroundPhotos2025.length} grayscale 2025 background photo${backgroundPhotos2025.length === 1 ? "" : "s"}.`;
+          }
+        },
+        error: function(error) {
+          console.warn("Could not load 2025 background photos.", error);
         }
       });
     }
 
     loadPhotos();
+    load2025BackgroundPhotos();
 
-    setInterval(loadPhotos, 300000);
+    setInterval(() => {
+      loadPhotos();
+      load2025BackgroundPhotos();
+    }, 300000);
   </script>
 </body>
 </html>
