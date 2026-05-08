@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Floating Photo Slideshow</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: #07111f;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #fff;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(244, 123, 38, 0.22), transparent 30%),
+        radial-gradient(circle at 80% 40%, rgba(0, 91, 234, 0.2), transparent 34%),
+        linear-gradient(135deg, #07111f, #111827 55%, #050816);
+      z-index: -3;
+    }
+
+    .slideshow-shell {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: clamp(18px, 3vw, 42px);
+    }
+
+    .slideshow-header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      color: #f47b26;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: clamp(0.7rem, 1vw, 0.85rem);
+    }
+
+    h1 {
+      margin: 6px 0 4px;
+      font-size: clamp(2rem, 5vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: 0.035em;
+      text-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+    }
+
+    .subtitle {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    }
+
+    .counter-card {
+      min-width: 125px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(14px);
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.24);
+    }
+
+    .counter-card span {
+      display: block;
+      font-weight: 950;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+    }
+
+    .counter-card label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .floating-photo {
+      position: absolute;
+      width: clamp(190px, 23vw, 420px);
+      aspect-ratio: 4 / 3;
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+      opacity: 0;
+      transform: translate3d(0,0,0) scale(0.92) rotate(var(--rot));
+      animation: floatPhoto var(--duration) ease-in-out forwards;
+    }
+
+    .floating-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: saturate(1.05) contrast(1.03);
+    }
+
+    .floating-photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.65), transparent 48%);
+      pointer-events: none;
+    }
+
+    .caption {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 13px;
+      z-index: 2;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.75);
+    }
+
+    .caption-title {
+      font-weight: 950;
+      font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+      line-height: 1.05;
+      margin-bottom: 4px;
+    }
+
+    .caption-meta {
+      font-size: clamp(0.72rem, 1vw, 0.86rem);
+      color: rgba(255,255,255,0.78);
+      line-height: 1.25;
+    }
+
+    .hero-photo {
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: min(68vw, 880px);
+      max-height: 68vh;
+      aspect-ratio: 16 / 10;
+      transform: translate(-50%, -50%);
+      border-radius: clamp(24px, 4vw, 44px);
+      overflow: hidden;
+      z-index: 4;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 40px 110px rgba(0,0,0,0.58);
+    }
+
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transform: scale(1.04);
+      transition: opacity 900ms ease, transform 1800ms ease;
+    }
+
+    .hero-photo img.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .hero-caption {
+      position: absolute;
+      left: clamp(18px, 3vw, 34px);
+      right: clamp(18px, 3vw, 34px);
+      bottom: clamp(18px, 3vw, 34px);
+      z-index: 6;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.78);
+    }
+
+    .hero-caption-title {
+      font-size: clamp(1.5rem, 4vw, 3.5rem);
+      font-weight: 950;
+      line-height: 0.95;
+      margin-bottom: 10px;
+    }
+
+    .hero-caption-meta {
+      font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+      color: rgba(255,255,255,0.82);
+    }
+
+    .hero-photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.72), transparent 55%);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .status-bar {
+      position: fixed;
+      left: clamp(18px, 3vw, 42px);
+      right: clamp(18px, 3vw, 42px);
+      bottom: clamp(18px, 3vw, 34px);
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 999px;
+      background: rgba(7, 17, 31, 0.74);
+      border: 1px solid rgba(255,255,255,0.16);
+      backdrop-filter: blur(14px);
+      color: rgba(255,255,255,0.72);
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #f47b26;
+      box-shadow: 0 0 20px rgba(244, 123, 38, 0.9);
+      display: inline-block;
+      margin-right: 7px;
+    }
+
+    .empty-state {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: rgba(255,255,255,0.8);
+      z-index: 50;
+    }
+
+    .empty-card {
+      max-width: 520px;
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(14px);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @keyframes floatPhoto {
+      0% {
+        opacity: 0;
+        transform: translate3d(var(--start-x), var(--start-y), 0) scale(0.8) rotate(var(--rot));
+      }
+
+      18% {
+        opacity: 0.88;
+      }
+
+      78% {
+        opacity: 0.88;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--end-x), var(--end-y), 0) scale(1.06) rotate(calc(var(--rot) * -1));
+      }
+    }
+
+    @media (max-width: 850px) {
+      .slideshow-header {
+        flex-direction: column;
+      }
+
+      .counter-card {
+        align-self: flex-start;
+      }
+
+      .hero-photo {
+        width: 88vw;
+        top: 54%;
+        aspect-ratio: 4 / 5;
+      }
+
+      .floating-photo {
+        width: clamp(150px, 42vw, 260px);
+        border-radius: 18px;
+      }
+
+      .status-bar {
+        border-radius: 20px;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .slideshow-shell {
+        padding: 16px;
+      }
+
+      .hero-photo {
+        width: 92vw;
+        top: 56%;
+        max-height: 58vh;
+      }
+
+      .hero-caption-title {
+        font-size: 1.55rem;
+      }
+
+      .caption {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="slideshow-shell">
+    <header class="slideshow-header">
+      <div>
+        <div class="eyebrow">Photo Location Dashboard</div>
+        <h1>Submitted Photos</h1>
+        <p class="subtitle">Approved submissions from the photo map.</p>
+      </div>
+
+      <div class="counter-card">
+        <span id="photoCount">0</span>
+        <label>Photos</label>
+      </div>
+    </header>
+
+    <section class="stage" id="stage"></section>
+
+    <section class="hero-photo">
+      <img id="heroImage" alt="Submitted photo" />
+      <div class="hero-caption">
+        <div id="heroTitle" class="hero-caption-title">Loading photos...</div>
+        <div id="heroMeta" class="hero-caption-meta">Connecting to the photo sheet</div>
+      </div>
+    </section>
+
+    <div id="emptyState" class="empty-state hidden">
+      <div class="empty-card">
+        <h2>No approved photos found</h2>
+        <p>Check the sheet columns for Latitude, Longitude, Status, and Photo(s). Also make sure Drive image links are viewable.</p>
+      </div>
+    </div>
+
+    <footer class="status-bar">
+      <div><span class="status-dot"></span><span id="statusText">Loading approved photo submissions...</span></div>
+      <div id="lastUpdated">Last updated —</div>
+    </footer>
+  </main>
+
+  <script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRT3JGBij77BOpqbD-TL_4kQ14EU3ohZPJ-U1b0F1ZIt6_w4JFga58GAhse25tdaFEq6s1LGBtKdLK2/pub?gid=926950107&single=true&output=csv";
+
+    const stage = document.getElementById("stage");
+    const photoCount = document.getElementById("photoCount");
+    const statusText = document.getElementById("statusText");
+    const lastUpdated = document.getElementById("lastUpdated");
+    const emptyState = document.getElementById("emptyState");
+
+    const heroImage = document.getElementById("heroImage");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroMeta = document.getElementById("heroMeta");
+
+    let photos = [];
+    let heroIndex = 0;
+    let floatingTimer = null;
+    let heroTimer = null;
+
+    function clean(value) {
+      return value ? String(value).trim() : "";
+    }
+
+    function escapeHtml(value) {
+      return clean(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getField(row, fieldName) {
+      const key = Object.keys(row).find(
+        k => k.trim().toLowerCase() === fieldName.toLowerCase()
+      );
+      return key ? row[key] : "";
+    }
+
+    function splitPhotoUrls(value) {
+      const raw = clean(value);
+
+      if (!raw) return [];
+
+      return raw
+        .split(",")
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    function getDriveImageUrl(url) {
+      const raw = clean(url);
+
+      if (!raw) return "";
+
+      const fileMatch = raw.match(/\/file\/d\/([^/]+)/);
+      const idMatch = raw.match(/[?&]id=([^&]+)/);
+      const fileId = fileMatch ? fileMatch[1] : idMatch ? idMatch[1] : "";
+
+      if (fileId) {
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+      }
+
+      return raw;
+    }
+
+    function parseDateValue(value) {
+      const raw = clean(value);
+      if (!raw) return 0;
+
+      const parsed = new Date(raw);
+      return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    }
+
+    function formatDate(value) {
+      const raw = clean(value);
+      if (!raw) return "Date not listed";
+
+      const parsed = new Date(raw);
+      if (isNaN(parsed.getTime())) return raw;
+
+      return parsed.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function pickPhoto() {
+      if (!photos.length) return null;
+      return photos[Math.floor(Math.random() * photos.length)];
+    }
+
+    function createFloatingPhoto() {
+      const item = pickPhoto();
+      if (!item) return;
+
+      const card = document.createElement("div");
+      card.className = "floating-photo";
+
+      const startX = `${randomBetween(-18, 18)}vw`;
+      const startY = `${randomBetween(88, 112)}vh`;
+      const endX = `${randomBetween(-18, 18)}vw`;
+      const endY = `${randomBetween(-28, -12)}vh`;
+      const left = `${randomBetween(0, 78)}vw`;
+      const top = `${randomBetween(10, 68)}vh`;
+      const rot = `${randomBetween(-9, 9)}deg`;
+      const duration = `${randomBetween(12, 20)}s`;
+
+      card.style.left = left;
+      card.style.top = top;
+      card.style.setProperty("--start-x", startX);
+      card.style.setProperty("--start-y", startY);
+      card.style.setProperty("--end-x", endX);
+      card.style.setProperty("--end-y", endY);
+      card.style.setProperty("--rot", rot);
+      card.style.setProperty("--duration", duration);
+
+      card.innerHTML = `
+        <img src="${item.image_url}" alt="${escapeHtml(item.title)}">
+        <div class="caption">
+          <div class="caption-title">${escapeHtml(item.title)}</div>
+          <div class="caption-meta">${escapeHtml(item.date)}${item.name ? ` • ${escapeHtml(item.name)}` : ""}</div>
+        </div>
+      `;
+
+      card.querySelector("img").addEventListener("error", () => {
+        card.remove();
+      });
+
+      stage.appendChild(card);
+
+      setTimeout(() => {
+        card.remove();
+      }, parseFloat(duration) * 1000 + 500);
+    }
+
+    function showHeroPhoto() {
+      if (!photos.length) return;
+
+      const item = photos[heroIndex % photos.length];
+      heroIndex += 1;
+
+      heroImage.classList.remove("active");
+
+      setTimeout(() => {
+        heroImage.src = item.image_url;
+        heroImage.alt = item.title || "Submitted photo";
+        heroTitle.textContent = item.title || "Submitted Photo";
+        heroMeta.textContent = `${item.date}${item.name ? ` • ${item.name}` : ""}`;
+
+        requestAnimationFrame(() => {
+          heroImage.classList.add("active");
+        });
+      }, 350);
+    }
+
+    function startSlideshow() {
+      if (floatingTimer) clearInterval(floatingTimer);
+      if (heroTimer) clearInterval(heroTimer);
+
+      stage.innerHTML = "";
+
+      showHeroPhoto();
+
+      for (let i = 0; i < Math.min(8, photos.length * 2); i++) {
+        setTimeout(createFloatingPhoto, i * 650);
+      }
+
+      floatingTimer = setInterval(createFloatingPhoto, 1700);
+      heroTimer = setInterval(showHeroPhoto, 6500);
+    }
+
+    function loadPhotos() {
+      Papa.parse(SHEET_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const rows = results.data
+            .map(row => {
+              const status = clean(getField(row, "Status")).toLowerCase();
+              const title = getField(row, "Location Name");
+              const photoUrls = splitPhotoUrls(getField(row, "Photo(s)"));
+              const dateTaken = getField(row, "Date Taken");
+              const timestamp = getField(row, "Timestamp");
+              const name = getField(row, "Your Name");
+
+              return photoUrls.map(url => ({
+                status,
+                title,
+                name,
+                date_taken: dateTaken,
+                timestamp,
+                sort_date: parseDateValue(timestamp) || parseDateValue(dateTaken),
+                image_url: getDriveImageUrl(url)
+              }));
+            })
+            .flat()
+            .filter(item => {
+              return (
+                item.status !== "rejected" &&
+                item.image_url
+              );
+            })
+            .sort((a, b) => b.sort_date - a.sort_date)
+            .map(item => ({
+              ...item,
+              date: formatDate(item.date_taken || item.timestamp)
+            }));
+
+          photos = rows;
+
+          photoCount.textContent = photos.length;
+          lastUpdated.textContent = `Last updated ${new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          })}`;
+
+          if (!photos.length) {
+            emptyState.classList.remove("hidden");
+            statusText.textContent = "No approved photos found.";
+            return;
+          }
+
+          emptyState.classList.add("hidden");
+          statusText.textContent = `Displaying ${photos.length} approved submitted photo${photos.length === 1 ? "" : "s"}.`;
+
+          startSlideshow();
+        },
+        error: function(error) {
+          console.error(error);
+          emptyState.classList.remove("hidden");
+          statusText.textContent = "Could not load the published Google Sheet.";
+        }
+      });
+    }
+
+    loadPhotos();
+
+    setInterval(loadPhotos, 300000);
+  </script>
+</body>
+</html>
