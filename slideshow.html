@@ -118,7 +118,27 @@
       transform: translate3d(0,0,0) scale(0.92) rotate(var(--rot));
       animation: floatPhoto var(--duration) ease-in-out forwards;
     }
-
+    .floating-photo {
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+      contain: layout paint;
+    }
+    
+    .floating-photo img,
+    .hero-photo img {
+      background: rgba(255,255,255,0.06);
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    
+    .floating-photo.is-loaded {
+      visibility: visible;
+    }
+    
+    .floating-photo.is-loading {
+      visibility: hidden;
+    }
     .floating-photo img {
       width: 100%;
       height: auto;
